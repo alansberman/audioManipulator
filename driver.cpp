@@ -158,7 +158,7 @@ int main(int argc, char * argv[])
 		if (s=="-norm")
 		{
 			float rms1, rms2;
-				i++;
+			i++;
 			//Extract range 1 from the args
 			s=string(argv[i]);
 			rms1 = float(atoi(s.c_str()));

@@ -16,34 +16,43 @@
 namespace BRMALA003
 {
 	using namespace std;
-	void Audio::loadAudio(string inputFile, int noChannels)
+	void Audio::loadAudio<int8_t>(string inputFile)
 	{
 		ifstream file (inputFile, ifstream::binary);
 		int length;
-		if (noChannels == 1)
+		if (file)
 		{
-			if (file)
+			//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
+			file.seekg(0,file.end);
+			length = file.tellg();
+			file.seekg(0,file.beg);
+			noSamples = length/(sizeof(int8_t));
+			for (int i = 0; i<noSamples;++i)
 			{
-				//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
-				file.seekg(0,file.end);
-				length = file.tellg();
-				file.seekg(0,file.beg);
-				char * buffer = new char [length];
+				char * buffer = new char [length/noSamples];
+				&(data_vector[i]) = file.read(buffer,(length/noSamples));
+				delete[] buffer;
 			}
 		}
-		else
-		{
-			
-		}
-		
-		
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+	void Audio::loadAudio<pair<int16_t,int16_t>>(string inputFile)
+	{
+		ifstream file (inputFile, ifstream::binary);
+		int length;
+		if (file)
+		{
+			//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
+			file.seekg(0,file.end);
+			length = file.tellg();
+			file.seekg(0,file.beg);
+			noSamples = length/(sizeof(int16_t) * 2);
+			for (int i = 0; i<noSamples;++i)
+			{
+				char * buffer = new char [length/noSamples];
+				&(data_vector[i]) = file.read(buffer,(length/noSamples));
+				delete[] buffer;
+			}
+		}
+	}
+		
 }
