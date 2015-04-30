@@ -1,6 +1,6 @@
 //driver.cpp
-// Author: Alan Berman
-// 13/04/2015
+//Author: Alan Berman
+//30/04/2015
 
 #include <fstream>
 #include <iostream>
@@ -69,11 +69,11 @@ int main(int argc, char * argv[])
 			//Extract file 2's name from the args
 			file_two=string(argv[i]);
 			//add
+			break;
 		}
 		if (s=="-cut")
 		{
 			i++;
-			
 			//Extract range 1 from the args
 			s=string(argv[i]);
 			rangeOne = atoi(s.c_str());
@@ -82,8 +82,34 @@ int main(int argc, char * argv[])
 			s=string(argv[i]);
 			rangeTwo = atoi(s.c_str());
 			//cut
+			break;
 		}
 		if (s=="-radd")
+		{
+			i++;
+			//Extract range 1 from the args
+			s=string(argv[i]);
+			rangeOne = atoi(s.c_str());
+			i++;
+			//Extract range two from the args
+			s=string(argv[i]);
+			rangeTwo = atoi(s.c_str());
+			if (rangeOne!=rangeTwo)
+			{
+				cout << "Ranges not equal. Cannot perform operation." << endl;
+				break;
+			}
+			i++;
+			//Extract file 1's name from the args
+			file_one=string(argv[i]);
+			i++;
+			//Extract file 2's name from the args
+			file_two=string(argv[i]);
+			i++;
+			//radd
+			break;
+		}
+		if (s=="-cat")
 		{
 			i++;
 			//Extract file 1's name from the args
@@ -91,9 +117,62 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract file 2's name from the args
 			file_two=string(argv[i]);
-			//cut
+			i++;
+			//cat
+			break;
 		}
-		
+		if (s=="-v")
+		{
+			i++;
+			//Extract range 1 from the args
+			s=string(argv[i]);
+			rangeOne = atoi(s.c_str());
+			i++;
+			//Extract range two from the args
+			s=string(argv[i]);
+			rangeTwo = atoi(s.c_str());
+			i++;
+			//Extract file 1's name from the args
+			file_one=string(argv[i]);
+			i++;
+			//v
+		}
+		if (s=="-rev")
+		{
+			i++;
+			//Extract file 1's name from the args
+			file_one=string(argv[i]);
+			i++;
+			//rev
+			break;
+		}
+		if (s=="-rms")
+		{
+			i++;
+			//Extract file 1's name from the args
+			file_one=string(argv[i]);
+			i++;
+			//rms
+			break;
+		}
+		if (s=="-norm")
+		{
+			float rms1, rms2;
+				i++;
+			//Extract range 1 from the args
+			s=string(argv[i]);
+			rms1 = float(atoi(s.c_str()));
+			i++;
+			//Extract range two from the args
+			s=string(argv[i]);
+			rms2 = float(atoi(s.c_str()));
+			i++;
+			//Extract file 1's name from the args
+			file_one=string(argv[i]);
+			i++;
+			//norm
+			break;
+		}
 	}
 	
 	return 0;
