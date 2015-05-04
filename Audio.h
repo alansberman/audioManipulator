@@ -6,6 +6,10 @@
 #define AUDIO_H
 #include <memory>
 #include <cstdint>
+#include <iostream>
+#include <ostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <numeric>
 #include <string>
@@ -19,6 +23,7 @@ namespace BRMALA003
 		private:
 		vector<int8_t> data_vector;
 		int noSamples;
+		int sampleLength;
 		//Adapted from framework given in assignment 4 brief
 		public:
 		
@@ -27,7 +32,15 @@ namespace BRMALA003
 		~Audio() = default;
 		//Return a reference to Audio_ptr
 		//Write the Audio to outFile
-		void saveAudio(string outFile);
+		void saveAudio(string outFile)
+		{
+			ofstream output;
+			output.open(outFile.c_str(), ios::out | ios::binary);
+			for (auto i = data_vector.begin();i != data_vector.end(); ++i)
+			{
+			//	output.write((char *) data_vector.at(i),noSamples/sampleLength);
+			}
+		}
 		//Read in the Audio inputFile
 		void loadAudio(string inputFile)
 		{
@@ -38,13 +51,15 @@ namespace BRMALA003
 				//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
 				file.seekg(0,file.end);
 				length = file.tellg();
+				sampleLength = length;
 				file.seekg(0,file.beg);
 				noSamples = length/(sizeof(int8_t));
 				for (int i = 0; i<noSamples;++i)
 				{
 					char * buffer = new char [length/noSamples];
-					&(data_vector[i]) = file.read(buffer,(length/noSamples));
+					file.read(buffer,(length/noSamples));
 					file.seekg(length/noSamples);
+					data_vector[i]=buffer;
 					delete[] buffer;
 				}
 			}
@@ -78,6 +93,8 @@ namespace BRMALA003
 	{
 		private:
 		vector<pair<int16_t,int16_t>> data_vector;
+		int noSamples;
+		int sampleLength;
 		//Adapted from framework given in assignment 4 brief
 		public:
 		
@@ -97,14 +114,19 @@ namespace BRMALA003
 				//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
 				file.seekg(0,file.end);
 				length = file.tellg();
+				sampleLength = length;
 				file.seekg(0,file.beg);
 				noSamples = length/(sizeof(int16_t) * 2);
 				for (int i = 0; i<noSamples;++i)
 				{
 					char * buffer = new char [length/noSamples];
-					&(data_vector[i]) = file.read(buffer,(length/noSamples));
-					file.seekg(length/noSamples);
-					delete[] buffer;
+					file.read(buffer,((length/noSamples)/2));
+					file.seekg((length/noSamples)/2);
+					data_vector[i].first=*buffer;
+					file.read(buffer,((length/noSamples)/2));
+					file.seekg((length/noSamples)/2);
+					data_vector[i].second=*buffer;
+						delete[] buffer;
 				}
 			}
 		}
