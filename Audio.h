@@ -29,7 +29,26 @@ namespace BRMALA003
 		//Write the Audio to outFile
 		void saveAudio(string outFile);
 		//Read in the Audio inputFile
-		void loadAudio(string inputFile);
+		void loadAudio(string inputFile)
+		{
+			ifstream file (inputFile, ifstream::binary);
+			int length;
+			if (file)
+			{
+				//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
+				file.seekg(0,file.end);
+				length = file.tellg();
+				file.seekg(0,file.beg);
+				noSamples = length/(sizeof(int8_t));
+				for (int i = 0; i<noSamples;++i)
+				{
+					char * buffer = new char [length/noSamples];
+					&(data_vector[i]) = file.read(buffer,(length/noSamples));
+					file.seekg(length/noSamples);
+					delete[] buffer;
+				}
+			}
+		}
 		//Reverse an Audio clip
 		void reverseAudio(Audio & aClip);
 		//Ranged add
@@ -69,7 +88,26 @@ namespace BRMALA003
 		//Write the Audio to outFile
 		void saveAudio(string outFile);
 		//Read in the Audio inputFile
-		void loadAudio(string inputFile);
+		void loadAudio(string inputFile)
+		{
+			ifstream file (inputFile, ifstream::binary);
+			int length;
+			if (file)
+			{
+				//Adapted from http://www.cplusplus.com/reference/istream/istream/tellg/
+				file.seekg(0,file.end);
+				length = file.tellg();
+				file.seekg(0,file.beg);
+				noSamples = length/(sizeof(int16_t) * 2);
+				for (int i = 0; i<noSamples;++i)
+				{
+					char * buffer = new char [length/noSamples];
+					&(data_vector[i]) = file.read(buffer,(length/noSamples));
+					file.seekg(length/noSamples);
+					delete[] buffer;
+				}
+			}
+		}
 		//Reverse an Audio clip
 		void reverseAudio(Audio & aClip);
 		//Ranged add
