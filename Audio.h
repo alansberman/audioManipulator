@@ -21,14 +21,17 @@ namespace BRMALA003
 	template <typename T> class Audio
 	{
 		private:
-		vector<int8_t> data_vector;
+		vector<T> data_vector;
 		int noSamples;
 		int sampleLength;
 		//Adapted from framework given in assignment 4 brief
 		public:
 		
 		//Constructor
-		Audio<T>(string file);
+		Audio (string file)
+		{
+			loadAudio(file);
+		}
 		~Audio() = default;
 		//Return a reference to Audio_ptr
 		//Write the Audio to outFile
@@ -58,10 +61,11 @@ namespace BRMALA003
 				{
 					char * buffer = new char [length/noSamples];
 					file.read(buffer,(length/noSamples));
-					file.seekg(length/noSamples);
-					data_vector[i]=buffer;
-					delete[] buffer;
+					file.seekg(length/noSamples);										
+					data_vector[i]=*buffer; //Fails
+					delete[] buffer;				
 				}
+				
 			}
 		}
 		//Reverse an Audio clip
