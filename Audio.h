@@ -56,14 +56,17 @@ namespace BRMALA003
 				length = file.tellg();
 				sampleLength = length;
 				file.seekg(0,file.beg);
-				noSamples = length/(sizeof(int8_t));
+				noSamples = length/(sizeof(T));
+				data_vector.resize(noSamples);
 				for (int i = 0; i<noSamples;++i)
 				{
-					char * buffer = new char [length/noSamples];
-					file.read(buffer,(length/noSamples));
-					file.seekg(length/noSamples);										
-					data_vector[i]=*buffer; //Fails
-					delete[] buffer;				
+					char * buffer = new char [sizeof(T)];
+					file.read(buffer,(sizeof(T)));				
+					cout << "Awe" << endl;								
+					data_vector[i]=(*((T*) (buffer))); 
+					cout << "Awase" << endl;		
+					delete[] buffer;		
+					
 				}
 				
 			}
@@ -93,10 +96,10 @@ namespace BRMALA003
 	};
 	
 	
-	template<> class Audio<pair<int16_t,int16_t>>
+	template<> class Audio<pair<typename T,typename T>>
 	{
 		private:
-		vector<pair<int16_t,int16_t>> data_vector;
+		vector<pair<T,T>> data_vector;
 		int noSamples;
 		int sampleLength;
 		//Adapted from framework given in assignment 4 brief
@@ -120,17 +123,19 @@ namespace BRMALA003
 				length = file.tellg();
 				sampleLength = length;
 				file.seekg(0,file.beg);
-				noSamples = length/(sizeof(int16_t) * 2);
+				noSamples = length/((sizeof(T)) * 2);
+				data_vector.resize(noSamples);
 				for (int i = 0; i<noSamples;++i)
 				{
-					char * buffer = new char [length/noSamples];
-					file.read(buffer,((length/noSamples)/2));
-					file.seekg((length/noSamples)/2);
-					data_vector[i].first=*buffer;
-					file.read(buffer,((length/noSamples)/2));
-					file.seekg((length/noSamples)/2);
-					data_vector[i].second=*buffer;
-						delete[] buffer;
+					char * bufferLeft = new char [(sizeof(T))];
+					file.read(buffer,(sizeof(T)));
+					data_vector[i].first=(*((T*) (bufferLeft))); 
+					char * bufferRight = new char [(sizeof(T))];
+					file.read(bufferRight,(sizeof(T)));
+					data_vector[i].second=(*((T*) (bufferRight))); 
+					delete[] bufferLeft;
+					delete[] bufferRight;
+					cout << "yooo!" << endl;
 				}
 			}
 		}
