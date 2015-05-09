@@ -96,7 +96,7 @@ namespace BRMALA003
 	};
 	
 	
-	template<> class Audio<pair<typename T,typename T>>
+	template<typename T> class Audio<pair<T,T>>
 	{
 		private:
 		vector<pair<T,T>> data_vector;
@@ -106,7 +106,10 @@ namespace BRMALA003
 		public:
 		
 		//Constructor
-		Audio(string file);
+		Audio (string file1)
+		{
+			loadAudio(file1);
+		}
 		~Audio() = default;
 		//Return a reference to Audio_ptr
 		//Write the Audio to outFile
@@ -128,7 +131,7 @@ namespace BRMALA003
 				for (int i = 0; i<noSamples;++i)
 				{
 					char * bufferLeft = new char [(sizeof(T))];
-					file.read(buffer,(sizeof(T)));
+					file.read(bufferLeft,(sizeof(T)));
 					data_vector[i].first=(*((T*) (bufferLeft))); 
 					char * bufferRight = new char [(sizeof(T))];
 					file.read(bufferRight,(sizeof(T)));
