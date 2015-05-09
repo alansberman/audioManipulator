@@ -31,9 +31,9 @@ namespace BRMALA003
 		Audio (string file)
 		{
 			loadAudio(file);
+			saveAudio("output.raw");
 		}
 		~Audio() = default;
-		//Return a reference to Audio_ptr
 		//Write the Audio to outFile
 		void saveAudio(string outFile)
 		{
@@ -41,7 +41,7 @@ namespace BRMALA003
 			output.open(outFile.c_str(), ios::out | ios::binary);
 			for (auto i = data_vector.begin();i != data_vector.end(); ++i)
 			{
-			//	output.write((char *) data_vector.at(i),noSamples/sampleLength);
+				output << *i;
 			}
 		}
 		//Read in the Audio inputFile
@@ -61,10 +61,8 @@ namespace BRMALA003
 				for (int i = 0; i<noSamples;++i)
 				{
 					char * buffer = new char [sizeof(T)];
-					file.read(buffer,(sizeof(T)));				
-					cout << "Awe" << endl;								
-					data_vector[i]=(*((T*) (buffer))); 
-					cout << "Awase" << endl;		
+					file.read(buffer,(sizeof(T)));								
+					data_vector[i]=(*((T*) (buffer))); 	
 					delete[] buffer;		
 					
 				}
@@ -95,25 +93,31 @@ namespace BRMALA003
 		
 	};
 	
-	
 	template<typename T> class Audio<pair<T,T>>
 	{
 		private:
 		vector<pair<T,T>> data_vector;
 		int noSamples;
 		int sampleLength;
-		//Adapted from framework given in assignment 4 brief
 		public:
 		
 		//Constructor
 		Audio (string file1)
 		{
 			loadAudio(file1);
+			saveAudio("output.raw");
 		}
 		~Audio() = default;
-		//Return a reference to Audio_ptr
-		//Write the Audio to outFile
-		void saveAudio(string outFile);
+		//Write out the audio to outFile
+		void saveAudio(string outFile)
+		{
+			ofstream output;
+			output.open(outFile.c_str(), ios::out | ios::binary);
+			for (auto i = data_vector.begin();i != data_vector.end(); ++i)
+			{
+				output << (*i).first << (*i).second;
+			}
+		}
 		//Read in the Audio inputFile
 		void loadAudio(string inputFile)
 		{
@@ -138,7 +142,6 @@ namespace BRMALA003
 					data_vector[i].second=(*((T*) (bufferRight))); 
 					delete[] bufferLeft;
 					delete[] bufferRight;
-					cout << "yooo!" << endl;
 				}
 			}
 		}

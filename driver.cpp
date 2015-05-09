@@ -1,12 +1,13 @@
 //driver.cpp
 //Author: Alan Berman
 //30/04/2015
-
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <sstream>
-
+#include <vector>
+#include "Audio.h"
 //Driver that performs a variety of operations one/two 
 //sound files
 using namespace std;
@@ -31,9 +32,7 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract the sample rate
 			s=string(argv[i]);
-			sampleRate = atoi(s.c_str());
-			i++;
-			
+			sampleRate = atoi(s.c_str());	
 		}
 		if (s=="-b")
 		{
