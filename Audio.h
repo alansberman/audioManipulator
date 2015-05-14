@@ -11,6 +11,7 @@
 #include <ostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <vector>
 #include <numeric>
 #include <string>
@@ -93,7 +94,12 @@ namespace BRMALA003
 			}
 		}
 		//Reverse an Audio clip
-		void reverseAudio(Audio & aClip);
+		Audio reverseAudio(void)
+		{
+			Audio temp = *this;
+			reverse(temp.data_vector.begin(),temp.data_vector.end());
+			return temp;
+		}
 		//Ranged add
 		Audio rangedAdd(Audio & clipOne, Audio & clipTwo);
 		//Compute RMS
@@ -278,7 +284,12 @@ namespace BRMALA003
 			}
 		}
 		//Reverse an Audio clip
-		void reverseAudio(Audio & aClip);
+		Audio reverseAudio(void)
+		{
+			Audio temp = *this;
+			reverse(temp.data_vector.begin(),temp.data_vector.end());
+			return temp;
+		}
 		//Ranged add
 		Audio rangedAdd(Audio & clipOne, Audio & clipTwo);
 		//Compute RMS

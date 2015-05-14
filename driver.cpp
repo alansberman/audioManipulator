@@ -183,7 +183,7 @@ int main(int argc, char * argv[])
 			cout << rangeOne << " " << rangeTwo << endl; 
 			if (rangeOne!=rangeTwo)
 			{
-				cout << "Ranges not equal. Cannot perform operation." << endl;
+				cout << "Ranges not equal. Cannot perform ranged add operation." << endl;
 				break;
 			}
 			i++;
@@ -294,7 +294,7 @@ int main(int argc, char * argv[])
 				if (bitCount == 8)
 				{
 					BRMALA003::Audio<pair<int8_t,int8_t>> file8stereo(file_one,sampleRate);
-					cout << "Changing " << file_one << "'s volume by " << rangeOne << " and " << rangeTwo <<  "..." << endl;
+					cout << "Changing " << file_one << "'s left channel volume by " << rangeOne << " and its right channel volume by" << rangeTwo <<  "..." << endl;
 					pair<float,float>f = make_pair(rangeOne,rangeTwo);
 					BRMALA003::Audio<pair<int8_t,int8_t>> volstereo = file8stereo*(f);
 					volstereo.saveAudio(outFile,sampleRate);
@@ -318,7 +318,45 @@ int main(int argc, char * argv[])
 			//Extract file 1's name from the args
 			file_one=string(argv[i]);
 			i++;
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> file_8(file_one,sampleRate);
+					cout << "Reversing " << file_one <<  "..." << endl;
+					BRMALA003::Audio<int8_t> reversed = file_8.reverseAudio();
+					reversed.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> file_16(file_one,sampleRate);
+					cout << "Reversing " << file_one <<  "..." << endl;
+					BRMALA003::Audio<int16_t> reversed16 = file_16.reverseAudio();
+					reversed16.saveAudio(outFile,sampleRate);
+				}
+			}
+			//Stereo audio file
+			if (noChannels == 2)
+			{
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_8_stereo(file_one,sampleRate);
+					cout << "Reversing " << file_one <<  "..." << endl;
+					BRMALA003::Audio<pair<int8_t,int8_t>> reversedStereo = file_8_stereo.reverseAudio();
+					reversedStereo.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_16_stereo(file_one,sampleRate);
+					cout << "Reversing " << file_one <<  "..." << endl;
+					BRMALA003::Audio<pair<int16_t,int16_t>> reversedStereo16 = file_16_stereo.reverseAudio();
+					reversedStereo16.saveAudio(outFile,sampleRate);
+				}
+			}
 			//rev
+			cout << "Done!" << endl;
 			break;
 		}
 		if (s=="-rms")
