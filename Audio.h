@@ -134,8 +134,16 @@ namespace BRMALA003
 			}
 			return temp;
 		}
-		
-		Audio operator*(pair<float,float> f);
+		//Change the volume of the file by factor f.first
+		Audio operator*(pair<float,float> f)
+		{
+			Audio temp = *this;
+			for (int j = 0; j< noSamples;++j)
+			{
+				temp.data_vector[j] = temp.data_vector[j]*(f.first);
+			}
+			return temp;
+		}
 		//Add 2 files
 		Audio operator+(Audio & rhs)
 		{
@@ -200,7 +208,7 @@ namespace BRMALA003
 			return temp;
 			
 		}
-		Audio operator*(int thresh_value);
+		
 		
 	};
 	//Specialized template class (stereo .raw files)
@@ -315,7 +323,18 @@ namespace BRMALA003
 			}
 			return temp;
 		}
-		Audio operator*(pair<float,float> f);
+		//Change the volume of the file by factor f
+		//left channel by first, right by second
+		Audio operator*(pair<float,float> f)
+		{
+			Audio temp = *this;
+			for (int j = 0; j< noSamples;++j)
+			{
+				temp.data_vector[j].first = temp.data_vector[j].first*(f.first);
+				temp.data_vector[j].second = temp.data_vector[j].second*(f.second);
+			}
+			return temp;
+		}
 		//Add 2 files
 		Audio operator+(Audio & rhs)
 		{
@@ -417,7 +436,6 @@ namespace BRMALA003
 			return temp;
 			
 		}
-		Audio operator*(int thresh_value);
 		
 	};
 }
