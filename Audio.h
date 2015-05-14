@@ -25,15 +25,16 @@ namespace BRMALA003
 		vector<T> data_vector;
 		int noSamples;
 		int sampleLength;
+		int duration;
 		
 		//Adapted from framework given in assignment 4 brief
 		public:
 		
 		//Constructor
-		Audio (string file)
+		Audio (string file,int sampleRate)
 		{
-			loadAudio(file);
-			saveAudio("output.raw");
+			loadAudio(file,sampleRate);
+			
 		}
 		~Audio() = default;
 		//Write the Audio to outFile
@@ -41,13 +42,13 @@ namespace BRMALA003
 		{
 			ofstream output;
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			for (auto i = data_vector.begin();i != data_vector.end(); ++i)
-			{
-				output << *i;
-			}
+			output.write((char *) &data_vector[0], data_vector.size() *(sizeof(T)/sizeof(char)));
+			output.close();		
 		}
+		
+		
 		//Read in the Audio inputFile
-		void loadAudio(string inputFile)
+		void loadAudio(string inputFile,int sampleRate)
 		{
 			ifstream file (inputFile, ifstream::binary);
 			int length;
@@ -59,11 +60,13 @@ namespace BRMALA003
 				sampleLength = length;
 				file.seekg(0,file.beg);
 				noSamples = length/(sizeof(T));
+				duration = noSamples / (float) sampleRate;
+				cout << "duration : " << duration << endl;
 				data_vector.resize(noSamples);
 				for (int i = 0; i<noSamples;++i)
 				{
-					char * buffer = new char [sizeof(T)];
-					file.read(buffer,(sizeof(T)));								
+					char * buffer = new char [sizeof(T)/sizeof(char)];
+					file.read(buffer,(sizeof(T)/sizeof(char)));								
 					data_vector[i]=(*((T*) (buffer))); 	
 					delete[] buffer;		
 					
@@ -102,10 +105,12 @@ namespace BRMALA003
 		Audio operator+(Audio & rhs)
 		{
 			Audio temp = *this;
+			//If the file is 8bit
 			if (is_same<T,int8_t>::value)
 			{
 				for (int i = 0; i < noSamples; ++i)
 				{
+					//Clamp to the max value
 					if (temp.data_vector[i] + rhs.data_vector[i] >INT8_MAX)
 					{
 						temp.data_vector[i] = INT8_MAX;
@@ -116,10 +121,11 @@ namespace BRMALA003
 					}
 				}
 			}
-			else
+			else //16bit file
 			{
 				for (int i = 0; i < noSamples; ++i)
 				{
+					//Clamp to the max
 					if (temp.data_vector[i] + rhs.data_vector[i] >INT16_MAX)
 					{
 						temp.data_vector[i] = INT16_MAX;
@@ -130,55 +136,7 @@ namespace BRMALA003
 					}
 				}
 			}
-			/*//typedef typename vector<T>::iterator it;
-			//typename vector<T>::iterator beg = temp.begin();
-			//typename  vector<T>::iterator end = temp.end();
-			//typename vector<T>::iterator rhs_beg = rhs.begin();
-			auto iterator beg = temp.begin();
-			auto iterator end = temp.end();
-			auto iterator rhs_beg = rhs.begin();
-			//Clamp to int8_t's max value if sum > max
-			if (typeid(T)==int8_t)
-			{
-				//Iterate through the audio files
-				while (beg!=end)
-				{
-				
-					if (*beg + *rhs_beg >INT8_MAX)
-					{
-					   *beg = INT8_MAX;
-					   ++beg;
-					   ++rhs_beg; 
-					}
-					else
-					{
-						*beg = *beg + *rhs_beg;
-						++beg;
-						++rhs_beg; 
-					} 
-				}
-			}
-			else
-			{
-			//Iterate through the audio files
-				while (beg!=end)
-				{
-					//Clamp to the max if sum > max
-					if (*beg + *rhs_beg >INT16_MAX)
-					{
-					   *beg = INT16_MAX;
-					   ++beg;
-					   ++rhs_beg; 
-					}
-					else
-					{
-						*beg = *beg + *rhs_beg;
-						++beg;
-						++rhs_beg; 
-					} 
-				}
-			
-			}	 */
+		
 			return temp;
 		}
 		Audio operator^(pair<float,float> f);
@@ -192,13 +150,14 @@ namespace BRMALA003
 		vector<pair<T,T>> data_vector;
 		int noSamples;
 		int sampleLength;
+		int duration;
 		public:
 		
 		//Constructor
-		Audio (string file1)
+		Audio (string file1,int sampleRate)
 		{
-			loadAudio(file1);
-			saveAudio("output.raw");
+			loadAudio(file1,sampleRate);
+		//	saveAudio("output.raw");
 		}
 		~Audio() = default;
 		//Write out the audio to outFile
@@ -206,13 +165,11 @@ namespace BRMALA003
 		{
 			ofstream output;
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			for (auto i = data_vector.begin();i != data_vector.end(); ++i)
-			{
-				output << (*i).first << (*i).second;
-			}
+			output.write((char *) &data_vector[0], data_vector.size() * (sizeof(T)/sizeof(char)));
+			output.close();
 		}
 		//Read in the Audio inputFile
-		void loadAudio(string inputFile)
+		void loadAudio(string inputFile,int sampleRate)
 		{
 			ifstream file (inputFile, ifstream::binary);
 			int length;
@@ -224,14 +181,16 @@ namespace BRMALA003
 				sampleLength = length;
 				file.seekg(0,file.beg);
 				noSamples = length/((sizeof(T)) * 2);
+				duration = noSamples / (float) sampleRate;
 				data_vector.resize(noSamples);
 				for (int i = 0; i<noSamples;++i)
 				{
-					char * bufferLeft = new char [(sizeof(T))];
-					file.read(bufferLeft,(sizeof(T)));
+					//Make a buffer for each of the values of the pair
+					char * bufferLeft = new char [(sizeof(T)/sizeof(char))];
+					file.read(bufferLeft,(sizeof(T)/sizeof(char)));
 					data_vector[i].first=(*((T*) (bufferLeft))); 
-					char * bufferRight = new char [(sizeof(T))];
-					file.read(bufferRight,(sizeof(T)));
+					char * bufferRight = new char [(sizeof(T)/sizeof(char))];
+					file.read(bufferRight,(sizeof(T)/sizeof(char)));
 					data_vector[i].second=(*((T*) (bufferRight))); 
 					delete[] bufferLeft;
 					delete[] bufferRight;
@@ -256,7 +215,75 @@ namespace BRMALA003
 		//Operator overloads
 		Audio operator|(Audio & rhs);
 		Audio operator*(pair<float,float> f);
-		Audio operator+(Audio & rhs);
+		//Adds 
+		/*Audio operator+(Audio & rhs)
+		{
+			Audio temp = *this;
+			//If the audio file is 8bit
+			if (is_same<T,int8_t>::value)
+			{
+				for (int i = 0; i < noSamples; ++i)
+				{
+					//Clamp to the max (both values of the pair)
+					if (temp.data_vector[i].first + rhs.data_vector[i].first >INT8_MAX &&
+					temp.data_vector[i].second + rhs.data_vector[i].second >INT8_MAX)
+					{
+						temp.data_vector[i].first = INT8_MAX;
+						temp.data_vector[i].second = INT8_MAX;
+					}
+					//Clamp to the max (the second of the pair)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first >INT8_MAX)
+					{
+						temp.data_vector[i].first = INT8_MAX;
+						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
+					}
+					//Clamp to the max (the first of the pair)
+					else if (temp.data_vector[i].second + rhs.data_vector[i].second >INT8_MAX)
+					{
+						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
+						temp.data_vector[i].second = INT8_MAX;
+					}
+					else
+					{
+						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
+						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < noSamples; ++i)
+				{
+					//Clamp to the max (both values of the pair)
+					if (temp.data_vector[i].first + rhs.data_vector[i].first >INT16_MAX &&
+					temp.data_vector[i].second + rhs.data_vector[i].second >INT16_MAX)
+					{
+						temp.data_vector[i].first = INT16_MAX;
+						temp.data_vector[i].second = INT16_MAX;
+					}
+					//Clamp to the max (the second of the pair)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first >INT16_MAX)
+					{
+						temp.data_vector[i].first = INT16_MAX;
+						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
+					}
+					//Clamp to the max (the first of the pair)
+					else if (temp.data_vector[i].second + rhs.data_vector[i].second >INT16_MAX)
+					{
+						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
+						temp.data_vector[i].second = INT16_MAX;
+					}
+					else
+					{
+						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
+						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
+					}
+				
+				}
+			}
+		
+			return temp;
+		}*/
 		Audio operator^(pair<float,float> f);
 		Audio operator*(int thresh_value);
 		
