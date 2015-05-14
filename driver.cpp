@@ -32,32 +32,29 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract the sample rate
 			s=string(argv[i]);
-			sampleRate = atoi(s.c_str());	
+			sampleRate = atoi(s.c_str());
+		
 		}
 		if (s=="-b")
 		{
 			i++;
 			//Extract the bitCount 
 			s=string(argv[i]);
-			bitCount = atoi(s.c_str());
-			i++;
-			
+			bitCount = atoi(s.c_str());			
 		}
 		if (s=="-c")
 		{
 			i++;
 			//Extract the number of channels
 			s=string(argv[i]);
-			noChannels = atoi(s.c_str());
-			i++;
-			
+			noChannels = atoi(s.c_str());	
 		}
 		if (s=="-o")
 		{
 			i++;
 			//Extract the output file name
 			outFile=string(argv[i]);
-			i++;
+		
 		}
 		if (s=="-add")
 		{
@@ -67,7 +64,44 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract file 2's name from the args
 			file_two=string(argv[i]);
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> fileA_8(file_one);
+					BRMALA003::Audio<int8_t> fileB_8(file_two);
+					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
+					BRMALA003::Audio<int8_t> AplusB = fileA_8+fileB_8;
+					AplusB.saveAudio("output.raw");
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> fileA_16(file_one);
+					BRMALA003::Audio<int16_t> fileB_16(file_two);
+					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
+				}
+			}
+			//Stereo audio file
+			if (noChannels == 2)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_A_8(file_one);
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_B_8(file_two);
+					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_A_16(file_one);
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_B_16(file_two);
+					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
+				}
+			}
 			//add
+			cout << "Done!" << endl;
 			break;
 		}
 		if (s=="-cut")
@@ -172,6 +206,7 @@ int main(int argc, char * argv[])
 			//norm
 			break;
 		}
+		
 	}
 	
 	return 0;
