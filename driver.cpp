@@ -175,17 +175,21 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract range 1 from the args
 			s=string(argv[i]);
-			rangeOne = stof(s.c_str());
+			int rangeOne = atoi(s.c_str());
+			i++;
+			
+			//Extract seconds 1
+			s=string(argv[i]);
+			int s1=atoi(s.c_str());
 			i++;
 			//Extract range two from the args
 			s=string(argv[i]);
-			rangeTwo = stof(s.c_str());
-			cout << rangeOne << " " << rangeTwo << endl; 
-			if (rangeOne!=rangeTwo)
-			{
-				cout << "Ranges not equal. Cannot perform ranged add operation." << endl;
-				break;
-			}
+			int rangeTwo = atoi(s.c_str()); 
+			
+			i++;
+			//Extract seconds 2
+			s=string(argv[i]);
+			int s2=atoi(s.c_str());
 			i++;
 			//Extract file 1's name from the args
 			file_one=string(argv[i]);
@@ -193,7 +197,72 @@ int main(int argc, char * argv[])
 			//Extract file 2's name from the args
 			file_two=string(argv[i]);
 			i++;
+			if ((s1 - rangeOne)!=(s2-rangeTwo))
+			{
+				cout << "Ranges not equal. Cannot perform ranged add operation." << endl;
+				break;
+			}
+
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> fileAradd_8(file_one,sampleRate);
+					BRMALA003::Audio<int8_t> fileBradd_8(file_two,sampleRate);
+					cout << "Range Adding " << file_one << " to " << file_two  << endl;
+					cout << "across range " << rangeOne << " " << s1;
+					cout << " and " << rangeTwo << " " << s2  << endl;
+					pair<float,float>a = make_pair(rangeOne,s1);
+					pair<float,float>b = make_pair(rangeTwo,s2);
+					BRMALA003::Audio<int8_t> AraddB = fileAradd_8.rangedAdd(fileBradd_8,sampleRate,a,b);
+					AraddB.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> fileAradd_16(file_one,sampleRate);
+					BRMALA003::Audio<int16_t> fileBradd_16(file_two,sampleRate);
+					cout << "Range Adding " << file_one << " to " << file_two  << endl;
+					cout << "across range " << rangeOne << " " << s1;
+					cout << " and " << rangeTwo << " " << s2  << endl;
+					pair<float,float>a16 = make_pair(rangeOne,s1);
+					pair<float,float>b16 = make_pair(rangeTwo,s2);
+					BRMALA003::Audio<int16_t> AraddB16 = fileAradd_16.rangedAdd(fileBradd_16,sampleRate,a16,b16);
+					AraddB16.saveAudio(outFile,sampleRate);
+				}
+			}
+			//Stereo audio file
+			if (noChannels == 2)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_A_8(file_one,sampleRate);
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_B_8(file_two,sampleRate);
+					cout << "Range Adding " << file_one << " to " << file_two  << endl;
+					cout << "across range " << rangeOne << " " << s1;
+					cout << " and " << rangeTwo << " " << s2  << endl;
+					pair<float,float>astereo = make_pair(rangeOne,s1);
+					pair<float,float>bstereo = make_pair(rangeTwo,s2);
+					BRMALA003::Audio<pair<int8_t,int8_t>> A_radd_B = file_A_8.rangedAdd(file_B_8,sampleRate,astereo,bstereo);
+					A_radd_B.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_A_16(file_one,sampleRate);
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_B_16(file_two,sampleRate);
+					cout << "Range Adding " << file_one << " to " << file_two  << endl;
+					cout << "across range " << rangeOne << " " << s1;
+					cout << " and " << rangeTwo << " " << s2  << endl;
+					pair<float,float>astereo16 = make_pair(rangeOne,s1);
+					pair<float,float>bstereo16 = make_pair(rangeTwo,s2);
+					BRMALA003::Audio<pair<int16_t,int16_t>> A_radd_B16 = file_A_16.rangedAdd(file_B_16,sampleRate,astereo16,bstereo16);
+					A_radd_B16.saveAudio(outFile,sampleRate);
+				}
+			}
 			//radd
+			cout << "Done!" << endl;
 			break;
 		}
 		//Concatenate 2 audio files

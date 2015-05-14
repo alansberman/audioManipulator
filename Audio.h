@@ -60,7 +60,7 @@ namespace BRMALA003
 			//Make the output file have an informative name
 			outFile+="_"+sampleRateString+"_"+type+"_mono.raw";
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			output.write((char *) &data_vector[0], data_vector.size() *(sizeof(T)/sizeof(char)));
+			output.write((char *) &data_vector[0], data_vector.size() *sizeof(T));
 			output.close();		
 		}
 		
@@ -79,21 +79,20 @@ namespace BRMALA003
 				file.seekg(0,file.beg);
 				noSamples = length/(sizeof(T));
 				duration = noSamples / (float) sampleRate;
-				cout << "duration : " << duration << endl;
 				data_vector.resize(noSamples);
 				//For each sample, read in the appropriate number of chars
+				//after making a buffer for each sample
 				for (int i = 0; i<noSamples;++i)
 				{
-					char * buffer = new char [sizeof(T)/sizeof(char)];
-					file.read(buffer,(sizeof(T)/sizeof(char)));								
+					char * buffer = new char [sizeof(T)];
+					file.read(buffer,sizeof(T));									
 					data_vector[i]=(*((T*) (buffer))); 	
-					delete[] buffer;		
-					
-				}
-				
+					delete[] buffer;			
+				}				
 			}
 		}
-		//Reverse an Audio clip
+		//Reverse an Audio clip using the Standard Template Library's
+		//reverse()
 		Audio reverseAudio(void)
 		{
 			Audio temp = *this;
@@ -101,7 +100,30 @@ namespace BRMALA003
 			return temp;
 		}
 		//Ranged add
-		Audio rangedAdd(Audio & clipOne, Audio & clipTwo);
+		//adds two ranges of two audio files (same size) [in seconds] together
+		//and places the result in a new file
+		Audio rangedAdd(Audio & rhs,int sampleRate,pair<int,int> a,pair<int,int> b)
+		{
+			Audio rhsCopy = rhs;
+			Audio temp = *this;
+			
+			//find number of samples in a second(1 second <=> 44100 samples)
+			//and thus the range represented in samples
+			int range1 = (a.second * sampleRate) - (a.first * sampleRate);
+			int range2 = (b.second * sampleRate) - (a.first * sampleRate);
+			//Adjust numSamples
+			temp.noSamples = range1;
+			rhsCopy.noSamples = range2;
+			temp.data_vector.clear();
+			temp.data_vector.resize(temp.noSamples);
+			rhsCopy.data_vector.clear();
+			rhsCopy.data_vector.resize(rhsCopy.noSamples);
+			copy(this->data_vector.begin()+(a.first*sampleRate),this->data_vector.begin()+(a.second*sampleRate),temp.data_vector.begin());
+			copy(rhs.data_vector.begin()+(a.first*sampleRate),rhs.data_vector.begin()+(b.second*sampleRate),rhsCopy.data_vector.begin());
+			Audio result =temp+rhsCopy;
+			cout << result.data_vector.size() << " is result's size " << endl;
+			return result;  	
+		}
 		//Compute RMS
 		void computeRMS(Audio & aClip);
 		//Normalize
@@ -155,6 +177,7 @@ namespace BRMALA003
 		{
 			Audio temp = *this;
 			//If the file is 8bit
+			int max16 = INT16_MAX; //prevents compiler warning
 			if (is_same<T,int8_t>::value)
 			{
 				for (int i = 0; i < noSamples; ++i)
@@ -175,9 +198,9 @@ namespace BRMALA003
 				for (int i = 0; i < noSamples; ++i)
 				{
 					//Clamp to the max
-					if (temp.data_vector[i] + rhs.data_vector[i] >INT16_MAX)
+					if (temp.data_vector[i] + rhs.data_vector[i] >max16)
 					{
-						temp.data_vector[i] = INT16_MAX;
+						temp.data_vector[i] = max16;
 					}
 					else
 					{
@@ -251,7 +274,7 @@ namespace BRMALA003
 			//Make the output file have an informative name
 			outFile+="_"+sampleRateString+"_"+type+"_stereo.raw";
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			output.write((char *) &data_vector[0], data_vector.size() * ((sizeof(T)*2)/sizeof(char)));
+			output.write((char *) &data_vector[0], data_vector.size() * (sizeof(T)*2));
 			output.close();
 		}
 		//Read in the Audio inputFile
@@ -271,27 +294,56 @@ namespace BRMALA003
 				data_vector.resize(noSamples);
 				for (int i = 0; i<noSamples;++i)
 				{
-					//Make a buffer for each of the values of the pair
-					char * bufferLeft = new char [(sizeof(T)*2)/sizeof(char)];
-					file.read(bufferLeft,(sizeof(T)/sizeof(char)));
+					//For each sample, read in the appropriate number of chars
+					//after making a buffer for each of the values of the pair
+					//(i.e. the left and right channels)
+					char * bufferLeft = new char [(sizeof(T)*2)];
+					file.read(bufferLeft,sizeof(T));
 					data_vector[i].first=(*((T*) (bufferLeft))); 
-					char * bufferRight = new char [(sizeof(T)*2)/sizeof(char)];
-					file.read(bufferRight,(sizeof(T)/sizeof(char)));
+					char * bufferRight = new char [(sizeof(T)*2)];
+					file.read(bufferRight,sizeof(T));
 					data_vector[i].second=(*((T*) (bufferRight))); 
 					delete[] bufferLeft;
 					delete[] bufferRight;
 				}
 			}
 		}
-		//Reverse an Audio clip
+		//Reverse an Audio clip using the Standard Template Library's
+		//reverse()
 		Audio reverseAudio(void)
 		{
 			Audio temp = *this;
 			reverse(temp.data_vector.begin(),temp.data_vector.end());
 			return temp;
 		}
+		
 		//Ranged add
-		Audio rangedAdd(Audio & clipOne, Audio & clipTwo);
+		//adds two ranges of two audio files (same size) [in seconds] together
+		//and places the result in a new file
+		Audio rangedAdd(Audio & rhs,int sampleRate,pair<int,int> a,pair<int,int> b)
+		{
+			Audio rhsCopy = rhs;
+			Audio temp = *this;
+			
+			//find number of samples in a second(1 second <=> 44100 samples)
+			//and thus the range represented in samples
+			int range1 = (a.second * sampleRate) - (a.first * sampleRate);
+			int range2 = (b.second * sampleRate) - (a.first * sampleRate);
+			//Adjust numSamples
+			temp.noSamples = range1;
+			rhsCopy.noSamples = range2;
+			temp.data_vector.clear();
+			temp.data_vector.resize(temp.noSamples);
+			rhsCopy.data_vector.clear();
+			rhsCopy.data_vector.resize(rhsCopy.noSamples);
+			copy(this->data_vector.begin()+(a.first*sampleRate),this->data_vector.begin()+(a.second*sampleRate),temp.data_vector.begin());
+			copy(rhs.data_vector.begin()+(a.first*sampleRate),rhs.data_vector.begin()+(b.second*sampleRate),rhsCopy.data_vector.begin());
+			Audio result =temp+rhsCopy;
+			cout << result.data_vector.size() << " is result's size " << endl;
+			return result;  	
+		}
+			
+		
 		//Compute RMS
 		void computeRMS(Audio & aClip);
 		//Normalize
@@ -351,6 +403,7 @@ namespace BRMALA003
 		{
 			Audio temp = *this;
 			//If the audio file is 8bit
+			int max16stereo = INT16_MAX; //prevents compiler warning
 			if (is_same<T,int8_t>::value)
 			{
 				for (int i = 0; i < noSamples; ++i)
@@ -386,23 +439,23 @@ namespace BRMALA003
 				for (int i = 0; i < noSamples; ++i)
 				{
 					//Clamp to the max (both values of the pair)
-					if (temp.data_vector[i].first + rhs.data_vector[i].first >INT16_MAX &&
-					temp.data_vector[i].second + rhs.data_vector[i].second >INT16_MAX)
+					if (temp.data_vector[i].first + rhs.data_vector[i].first >max16stereo &&
+					temp.data_vector[i].second + rhs.data_vector[i].second >max16stereo)
 					{
-						temp.data_vector[i].first = INT16_MAX;
-						temp.data_vector[i].second = INT16_MAX;
+						temp.data_vector[i].first = max16stereo;
+						temp.data_vector[i].second = max16stereo;
 					}
 					//Clamp to the max (the second of the pair)
-					else if (temp.data_vector[i].first + rhs.data_vector[i].first >INT16_MAX)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first >max16stereo)
 					{
-						temp.data_vector[i].first = INT16_MAX;
+						temp.data_vector[i].first = max16stereo;
 						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
 					}
 					//Clamp to the max (the first of the pair)
-					else if (temp.data_vector[i].second + rhs.data_vector[i].second >INT16_MAX)
+					else if (temp.data_vector[i].second + rhs.data_vector[i].second >max16stereo)
 					{
 						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
-						temp.data_vector[i].second = INT16_MAX;
+						temp.data_vector[i].second = max16stereo;
 					}
 					else
 					{
@@ -427,7 +480,6 @@ namespace BRMALA003
 			//Clear, get new number of samples and resize
 			temp.data_vector.clear();
 			temp.noSamples = temp.noSamples - (end-start);
-			
 			temp.data_vector.resize(temp.noSamples);
 			
 			//Copy values til start
