@@ -15,10 +15,16 @@
 #include <numeric>
 #include <string>
 
-//Header file that includes the Audio class declaration
+//Header file that includes the Audio class declarations
+//both general and specialised. The general template Audio
+//class takes either a 8bit or 16bit mono channel file,
+//while the specialised class takes a 8bit or 16bit stereo file.
+//Both classes support a variety of options on the audio files:
+//add,ranged add,cut,concatenate,reverse,normalize,RMS and volume factor
 namespace BRMALA003
 {
 	using namespace std;
+	//General template class (mono .raw files)
 	template <typename T> class Audio
 	{
 		private:
@@ -27,20 +33,31 @@ namespace BRMALA003
 		int sampleLength;
 		int duration;
 		
-		//Adapted from framework given in assignment 4 brief
 		public:
 		
 		//Constructor
 		Audio (string file,int sampleRate)
 		{
-			loadAudio(file,sampleRate);
-			
+			loadAudio(file,sampleRate);			
 		}
 		~Audio() = default;
 		//Write the Audio to outFile
-		void saveAudio(string outFile)
+		void saveAudio(string outFile,int sampleRate)
 		{
 			ofstream output;
+			string type = "";
+			//If it's an 8bit file
+			if  (is_same<T,int8_t>::value)
+			{
+				type="8";
+			}
+			else
+			{
+				type="16";
+			}
+			string sampleRateString = to_string(sampleRate);
+			//Make the output file have an informative name
+			outFile+="_"+sampleRateString+"_"+type+"_mono.raw";
 			output.open(outFile.c_str(), ios::out | ios::binary);
 			output.write((char *) &data_vector[0], data_vector.size() *(sizeof(T)/sizeof(char)));
 			output.close();		
@@ -63,6 +80,7 @@ namespace BRMALA003
 				duration = noSamples / (float) sampleRate;
 				cout << "duration : " << duration << endl;
 				data_vector.resize(noSamples);
+				//For each sample, read in the appropriate number of chars
 				for (int i = 0; i<noSamples;++i)
 				{
 					char * buffer = new char [sizeof(T)/sizeof(char)];
@@ -88,6 +106,7 @@ namespace BRMALA003
 			noSamples = rhs.noSamples;	
 			sampleLength = rhs.sampleLength;
 			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
 			for (int j = 0; j< noSamples;++j)
 			{
 				data_vector[j] = rhs.data_vector[j];
@@ -99,9 +118,25 @@ namespace BRMALA003
 		Audio & operator=(Audio & rhs)=default; 
 		Audio & operator=(Audio && rhs)=default;
 		//Operator overloads
-		Audio operator|(Audio & rhs);
+		//Concatenate 2 files
+		Audio operator|(Audio & rhs)
+		{
+			Audio temp = *this;
+			//Store the old noSamples
+			int oldNoSamples = temp.noSamples;
+			//Set the concatenated number of samples (lhs + rhs)
+			//and resize the data vector accordingly
+			temp.noSamples = temp.noSamples + rhs.noSamples;
+			temp.data_vector.resize(temp.noSamples);
+			for (int i = oldNoSamples; i < temp.noSamples; ++i)
+			{
+				temp.data_vector[i] = rhs.data_vector[i-oldNoSamples];	
+			}
+			return temp;
+		}
+		
 		Audio operator*(pair<float,float> f);
-		//Add
+		//Add 2 files
 		Audio operator+(Audio & rhs)
 		{
 			Audio temp = *this;
@@ -139,11 +174,19 @@ namespace BRMALA003
 		
 			return temp;
 		}
-		Audio operator^(pair<float,float> f);
+		Audio operator^(pair<float,float> f)
+		{
+			Audio temp = *this;
+			for (int i = 0; i < noSamples: ++i)
+			{
+				
+			}
+			
+		}
 		Audio operator*(int thresh_value);
 		
 	};
-	
+	//Specialized template class (stereo .raw files)
 	template<typename T> class Audio<pair<T,T>>
 	{
 		private:
@@ -157,13 +200,25 @@ namespace BRMALA003
 		Audio (string file1,int sampleRate)
 		{
 			loadAudio(file1,sampleRate);
-		//	saveAudio("output.raw");
 		}
 		~Audio() = default;
 		//Write out the audio to outFile
-		void saveAudio(string outFile)
+		void saveAudio(string outFile,int sampleRate)
 		{
 			ofstream output;
+			string type = "";
+			//If the file is 8bit
+			if  (is_same<T,int8_t>::value)
+			{
+				type="8";
+			}
+			else
+			{
+				type="16";
+			}
+			string sampleRateString = to_string(sampleRate);
+			//Make the output file have an informative name
+			outFile+="_"+sampleRateString+"_"+type+"_stereo.raw";
 			output.open(outFile.c_str(), ios::out | ios::binary);
 			output.write((char *) &data_vector[0], data_vector.size() * ((sizeof(T)*2)/sizeof(char)));
 			output.close();
@@ -208,10 +263,10 @@ namespace BRMALA003
 		//Copy Constructor
 		Audio(Audio & rhs)
 		{
-		
 			noSamples = rhs.noSamples;	
 			sampleLength = rhs.sampleLength;
 			data_vector.resize(noSamples);
+			//Copy rhs' data_vectors values (both halves of pair)
 			for (int j = 0; j< noSamples;++j)
 			{
 				data_vector[j].first = rhs.data_vector[j].first;
@@ -225,9 +280,26 @@ namespace BRMALA003
 		Audio & operator=(Audio & rhs); 
 		Audio & operator=(Audio && rhs);
 		//Operator overloads
-		Audio operator|(Audio & rhs);
+		
+		//Concatenate 2 files
+		Audio operator|(Audio & rhs)
+		{
+			Audio temp = *this;
+			//Store the old noSamples
+			int oldNoSamples = temp.noSamples;
+			//Set the concatenated number of samples (lhs + rhs)
+			//and resize the data vector accordingly
+			temp.noSamples = temp.noSamples + rhs.noSamples;
+			temp.data_vector.resize(temp.noSamples);
+			for (int i = oldNoSamples; i < temp.noSamples; ++i)
+			{
+				temp.data_vector[i].first = rhs.data_vector[i-oldNoSamples].first;
+				temp.data_vector[i].second = rhs.data_vector[i-oldNoSamples].second;	
+			}
+			return temp;
+		}
 		Audio operator*(pair<float,float> f);
-		//Adds 
+		//Add 2 files
 		Audio operator+(Audio & rhs)
 		{
 			Audio temp = *this;

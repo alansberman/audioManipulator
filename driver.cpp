@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
 					BRMALA003::Audio<int8_t> fileB_8(file_two,sampleRate);
 					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
 					BRMALA003::Audio<int8_t> AplusB = fileA_8+fileB_8;
-					AplusB.saveAudio(outFile);
+					AplusB.saveAudio(outFile,sampleRate);
 				}
 				else if (bitCount == 16)
 				{
@@ -82,31 +82,30 @@ int main(int argc, char * argv[])
 					BRMALA003::Audio<int16_t> fileB_16(file_two,sampleRate);
 					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
 					BRMALA003::Audio<int16_t> AplusB16 = fileA_16+fileB_16;
-					AplusB16.saveAudio(outFile);
-					cout << "EYYYY" << endl;
+					AplusB16.saveAudio(outFile,sampleRate);
 				}
 			}
 			//Stereo audio file
-		/*	if (noChannels == 2)
+			if (noChannels == 2)
 			{
 
 				if (bitCount == 8)
 				{
-					BRMALA003::Audio<pair<int8_t,int8_t>> file_A_8(file_one);
-					BRMALA003::Audio<pair<int8_t,int8_t>> file_B_8(file_two);
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_A_8(file_one,sampleRate);
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_B_8(file_two,sampleRate);
 					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
 					BRMALA003::Audio<pair<int8_t,int8_t>> A_plus_B = file_A_8+file_B_8;
-					A_plus_B.saveAudio(outFile);
+					A_plus_B.saveAudio(outFile,sampleRate);
 				}
 				else if (bitCount == 16)
 				{
-					BRMALA003::Audio<pair<int16_t,int16_t>> file_A_16(file_one);
-					BRMALA003::Audio<pair<int16_t,int16_t>> file_B_16(file_two);
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_A_16(file_one,sampleRate);
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_B_16(file_two,sampleRate);
 					cout << "Adding " << file_one << " to " << file_two << "..." << endl;
 					BRMALA003::Audio<pair<int16_t,int16_t>> A_plus_B16 = file_A_16+file_B_16;
-					A_plus_B16.saveAudio(outFile);
+					A_plus_B16.saveAudio(outFile,sampleRate);
 				}
-			}*/
+			}
 			//add
 			cout << "Done!" << endl;
 			break;
@@ -149,6 +148,7 @@ int main(int argc, char * argv[])
 			//radd
 			break;
 		}
+		//Concatenate 2 audio files
 		if (s=="-cat")
 		{
 			i++;
@@ -158,6 +158,48 @@ int main(int argc, char * argv[])
 			//Extract file 2's name from the args
 			file_two=string(argv[i]);
 			i++;
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> fileA_8(file_one,sampleRate);
+					BRMALA003::Audio<int8_t> fileB_8(file_two,sampleRate);
+					cout << "Concatenating " << file_one << " with " << file_two << "..." << endl;
+					BRMALA003::Audio<int8_t> AcatB = fileA_8|fileB_8;
+					AcatB.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> fileA_16(file_one,sampleRate);
+					BRMALA003::Audio<int16_t> fileB_16(file_two,sampleRate);
+					cout << "Concatenating " << file_one << " with " << file_two << "..." << endl;
+					BRMALA003::Audio<int16_t> AcatB16 = fileA_16|fileB_16;
+					AcatB16.saveAudio(outFile,sampleRate);
+				}
+			}
+			//Stereo audio file
+			if (noChannels == 2)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_A_8(file_one,sampleRate);
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_B_8(file_two,sampleRate);
+					cout << "Concatenating " << file_one << " with " << file_two << "..." << endl;
+					BRMALA003::Audio<pair<int8_t,int8_t>> A_cat_B = file_A_8|file_B_8;
+					A_cat_B.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_A_16(file_one,sampleRate);
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_B_16(file_two,sampleRate);
+					cout << "Concatenating " << file_one << " with " << file_two << "..." << endl;
+					BRMALA003::Audio<pair<int16_t,int16_t>> A_cat_B16 = file_A_16|file_B_16;
+					A_cat_B16.saveAudio(outFile,sampleRate);
+				}
+			}
 			//cat
 			break;
 		}
