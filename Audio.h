@@ -174,13 +174,30 @@ namespace BRMALA003
 		
 			return temp;
 		}
+		//Cut a file across a range (first value is start,
+		//second value is end)
 		Audio operator^(pair<float,float> f)
 		{
-			Audio temp = *this;
-			for (int i = 0; i < noSamples: ++i)
+			Audio temp=*this;
+			int start=(int) f.first;
+			int end=(int) f.second;	int counter=0;
+			//Clear, get new number of samples and resize			
+			temp.data_vector.clear();
+			temp.noSamples = temp.noSamples - (end-start);
+			temp.data_vector.resize(temp.noSamples);
+			//Copy values til start
+			for (int i = 0; i < start; ++i)
 			{
-				
+				temp.data_vector[i]=data_vector[i];
 			}
+			
+			//Copy values from start to end
+			for (int j = start; j < temp.noSamples; ++j)
+			{
+				temp.data_vector[j]=data_vector[end+counter];
+				++counter;
+			}
+			return temp;
 			
 		}
 		Audio operator*(int thresh_value);
@@ -368,7 +385,38 @@ namespace BRMALA003
 		
 			return temp;
 		}
-		Audio operator^(pair<float,float> f);
+		
+		//Cut a file across a range (first value is start,
+		//second value is end)
+		Audio operator^(pair<float,float> f)
+		{
+			Audio temp=*this;
+			int start=(int) f.first;
+			int end=(int) f.second;
+			int counter=0;
+			//Clear, get new number of samples and resize
+			temp.data_vector.clear();
+			temp.noSamples = temp.noSamples - (end-start);
+			
+			temp.data_vector.resize(temp.noSamples);
+			
+			//Copy values til start
+			for (int i = 0; i < start; ++i)
+			{
+				temp.data_vector[i].first = data_vector[i].first;
+				temp.data_vector[i].second = data_vector[i].second;
+			}
+			
+			//Copy values from start to end
+			for (int j = start; j < temp.noSamples; ++j)
+			{
+				temp.data_vector[j].first = data_vector[end+counter].first;
+				temp.data_vector[j].second = data_vector[end+counter].second;
+				++counter;
+			}
+			return temp;
+			
+		}
 		Audio operator*(int thresh_value);
 		
 	};

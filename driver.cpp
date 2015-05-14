@@ -17,7 +17,8 @@ int main(int argc, char * argv[])
 	string outFile = "out";
 	//String used to parse args
 	string s;
-	int sampleRate, bitCount, noChannels, rangeOne, rangeTwo;
+	int sampleRate, bitCount, noChannels;
+	float rangeOne, rangeTwo;
 	if (argc < 5)
 	{
 		cout << "Not enough arguments given. Try again!" << endl;
@@ -115,12 +116,58 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract range 1 from the args
 			s=string(argv[i]);
-			rangeOne = atoi(s.c_str());
+			rangeOne = (float) atoi(s.c_str());
 			i++;
 			//Extract range two from the args
 			s=string(argv[i]);
-			rangeTwo = atoi(s.c_str());
+			rangeTwo = (float) atoi(s.c_str());
+			i++;
+			//Extract file 1's name from the args
+			file_one=string(argv[i]);
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> file_8(file_one,sampleRate);
+					cout << "Cutting " << file_one << " across range " << rangeOne << " to " << rangeTwo << "..." << endl;
+					pair<float,float>f = make_pair(rangeOne,rangeTwo);
+					BRMALA003::Audio<int8_t> cut = file_8^(f);
+					cut.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> file_16(file_one,sampleRate);
+					cout << "Cutting " << file_one << " across range " << rangeOne << " to " << rangeTwo << "..." << endl;
+					pair<float,float>f = make_pair(rangeOne,rangeTwo);
+					BRMALA003::Audio<int16_t> cut16 = file_16^(f);
+					cut16.saveAudio(outFile,sampleRate);
+				}
+			}
+			//Stereo audio file
+			if (noChannels == 2)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<pair<int8_t,int8_t>> file8(file_one,sampleRate);
+					cout << "Cutting " << file_one << " across range " << rangeOne << " to " << rangeTwo << "..." << endl;
+					pair<float,float>f = make_pair(rangeOne,rangeTwo);
+					BRMALA003::Audio<pair<int8_t,int8_t>> cutstereo = file8^(f);
+					cutstereo.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<pair<int16_t,int16_t>> file16(file_one,sampleRate);
+					cout << "Cutting " << file_one << " across range " << rangeOne << " to " << rangeTwo << "..." << endl;
+					pair<float,float>f = make_pair(rangeOne,rangeTwo);
+					BRMALA003::Audio<pair<int16_t,int16_t>> cutStereo16 = file16^(f);
+					cutStereo16.saveAudio(outFile,sampleRate);
+				}
+			}
 			//cut
+			cout << "Done!" << endl;
 			break;
 		}
 		if (s=="-radd")
@@ -128,11 +175,11 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract range 1 from the args
 			s=string(argv[i]);
-			rangeOne = atoi(s.c_str());
+			rangeOne = (float) atoi(s.c_str());
 			i++;
 			//Extract range two from the args
 			s=string(argv[i]);
-			rangeTwo = atoi(s.c_str());
+			rangeTwo = (float) atoi(s.c_str());
 			if (rangeOne!=rangeTwo)
 			{
 				cout << "Ranges not equal. Cannot perform operation." << endl;
@@ -201,6 +248,7 @@ int main(int argc, char * argv[])
 				}
 			}
 			//cat
+			cout << "Done!" << endl;
 			break;
 		}
 		if (s=="-v")
