@@ -165,7 +165,7 @@ namespace BRMALA003
 		{
 			ofstream output;
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			output.write((char *) &data_vector[0], data_vector.size() * (sizeof(T)/sizeof(char)));
+			output.write((char *) &data_vector[0], data_vector.size() * ((sizeof(T)*2)/sizeof(char)));
 			output.close();
 		}
 		//Read in the Audio inputFile
@@ -186,10 +186,10 @@ namespace BRMALA003
 				for (int i = 0; i<noSamples;++i)
 				{
 					//Make a buffer for each of the values of the pair
-					char * bufferLeft = new char [(sizeof(T)/sizeof(char))];
+					char * bufferLeft = new char [(sizeof(T)*2)/sizeof(char)];
 					file.read(bufferLeft,(sizeof(T)/sizeof(char)));
 					data_vector[i].first=(*((T*) (bufferLeft))); 
-					char * bufferRight = new char [(sizeof(T)/sizeof(char))];
+					char * bufferRight = new char [(sizeof(T)*2)/sizeof(char)];
 					file.read(bufferRight,(sizeof(T)/sizeof(char)));
 					data_vector[i].second=(*((T*) (bufferRight))); 
 					delete[] bufferLeft;
@@ -206,7 +206,19 @@ namespace BRMALA003
 		//Normalize
 		void normalize(Audio & aClip); 
 		//Copy Constructor
-		Audio(Audio & rhs);
+		Audio(Audio & rhs)
+		{
+		
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			data_vector.resize(noSamples);
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j].first = rhs.data_vector[j].first;
+				data_vector[j].second = rhs.data_vector[j].second;
+			}
+		
+		}
 		//Move Constructor
 		Audio(Audio && rhs);
 		//Copy and Move Assignment Operators
@@ -216,7 +228,7 @@ namespace BRMALA003
 		Audio operator|(Audio & rhs);
 		Audio operator*(pair<float,float> f);
 		//Adds 
-		/*Audio operator+(Audio & rhs)
+		Audio operator+(Audio & rhs)
 		{
 			Audio temp = *this;
 			//If the audio file is 8bit
@@ -283,7 +295,7 @@ namespace BRMALA003
 			}
 		
 			return temp;
-		}*/
+		}
 		Audio operator^(pair<float,float> f);
 		Audio operator*(int thresh_value);
 		
