@@ -60,7 +60,7 @@ namespace BRMALA003
 			//Make the output file have an informative name
 			outFile+="_"+sampleRateString+"_"+type+"_mono.raw";
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			output.write((char *) &data_vector[0], data_vector.size() *sizeof(T));
+			output.write((char *) &data_vector[0], data_vector.size() *(sizeof(T)/sizeof(char)));
 			output.close();		
 		}
 		
@@ -84,8 +84,8 @@ namespace BRMALA003
 				//after making a buffer for each sample
 				for (int i = 0; i<noSamples;++i)
 				{
-					char * buffer = new char [sizeof(T)];
-					file.read(buffer,sizeof(T));									
+					char * buffer = new char [sizeof(T)/sizeof(char)];
+					file.read(buffer,(sizeof(T)/sizeof(char)));	
 					data_vector[i]=(*((T*) (buffer))); 	
 					delete[] buffer;			
 				}				
@@ -121,13 +121,21 @@ namespace BRMALA003
 			copy(this->data_vector.begin()+(a.first*sampleRate),this->data_vector.begin()+(a.second*sampleRate),temp.data_vector.begin());
 			copy(rhs.data_vector.begin()+(a.first*sampleRate),rhs.data_vector.begin()+(b.second*sampleRate),rhsCopy.data_vector.begin());
 			Audio result =temp+rhsCopy;
-			cout << result.data_vector.size() << " is result's size " << endl;
 			return result;  	
 		}
 		//Compute RMS
-		void computeRMS(Audio & aClip);
+		float computeRMS(void)
+		{
+			float RMS = accumulate(data_vector.begin(),data_vector.end(),0,[](T  sum, T  item){return (sum + pow(item,2));});
+			RMS=RMS/noSamples;
+			RMS=sqrt(double(abs(RMS)));
+			return RMS;
+		}
 		//Normalize
-		void normalize(Audio & aClip); 
+		Audio normalize(float left, float right)
+		{
+			Audio temp = *this;
+		} 
 		//Copy Constructor
 		Audio(const Audio & rhs)
 		{
@@ -178,14 +186,19 @@ namespace BRMALA003
 			Audio temp = *this;
 			//If the file is 8bit
 			int max16 = INT16_MAX; //prevents compiler warning
+			int min16 = INT16_MIN;
 			if (is_same<T,int8_t>::value)
 			{
 				for (int i = 0; i < noSamples; ++i)
 				{
-					//Clamp to the max value
+					//Clamp to the max/min value
 					if (temp.data_vector[i] + rhs.data_vector[i] >INT8_MAX)
 					{
 						temp.data_vector[i] = INT8_MAX;
+					}
+					else if (temp.data_vector[i] + rhs.data_vector[i] < INT8_MIN)
+					{
+						temp.data_vector[i] = INT8_MIN;
 					}
 					else
 					{
@@ -197,10 +210,14 @@ namespace BRMALA003
 			{
 				for (int i = 0; i < noSamples; ++i)
 				{
-					//Clamp to the max
+					//Clamp to the max/min
 					if (temp.data_vector[i] + rhs.data_vector[i] >max16)
 					{
 						temp.data_vector[i] = max16;
+					}
+					else if (temp.data_vector[i] + rhs.data_vector[i] < min16)
+					{
+						temp.data_vector[i] = min16;
 					}
 					else
 					{
@@ -274,7 +291,7 @@ namespace BRMALA003
 			//Make the output file have an informative name
 			outFile+="_"+sampleRateString+"_"+type+"_stereo.raw";
 			output.open(outFile.c_str(), ios::out | ios::binary);
-			output.write((char *) &data_vector[0], data_vector.size() * (sizeof(T)*2));
+			output.write((char *) &data_vector[0], data_vector.size() * ((sizeof(T)*2)/sizeof(char)));
 			output.close();
 		}
 		//Read in the Audio inputFile
@@ -297,11 +314,11 @@ namespace BRMALA003
 					//For each sample, read in the appropriate number of chars
 					//after making a buffer for each of the values of the pair
 					//(i.e. the left and right channels)
-					char * bufferLeft = new char [(sizeof(T)*2)];
-					file.read(bufferLeft,sizeof(T));
+					char * bufferLeft = new char [(sizeof(T)*2)/sizeof(char)];
+					file.read(bufferLeft,(sizeof(T)/sizeof(char)));
 					data_vector[i].first=(*((T*) (bufferLeft))); 
-					char * bufferRight = new char [(sizeof(T)*2)];
-					file.read(bufferRight,sizeof(T));
+					char * bufferRight = new char [(sizeof(T)*2)/sizeof(char)];
+					file.read(bufferRight,(sizeof(T)/sizeof(char)));
 					data_vector[i].second=(*((T*) (bufferRight))); 
 					delete[] bufferLeft;
 					delete[] bufferRight;
@@ -320,6 +337,7 @@ namespace BRMALA003
 		//Ranged add
 		//adds two ranges of two audio files (same size) [in seconds] together
 		//and places the result in a new file
+		
 		Audio rangedAdd(Audio & rhs,int sampleRate,pair<int,int> a,pair<int,int> b)
 		{
 			Audio rhsCopy = rhs;
@@ -345,7 +363,31 @@ namespace BRMALA003
 			
 		
 		//Compute RMS
-		void computeRMS(Audio & aClip);
+		pair<float,float> computeRMS(void)
+		{
+			Audio temp = *this;
+			//Make a data vector for the left and right values of the pair
+			vector<T> leftChannelVector;
+			leftChannelVector.resize(temp.noSamples);
+			vector<T> rightChannelVector;
+			rightChannelVector.resize(temp.noSamples);
+			//Add the left values to the left vector and vice versa
+			for (int i=0;i<noSamples;++i)
+			{
+				leftChannelVector[i]=data_vector[i].first;
+				rightChannelVector[i]=data_vector[i].second;
+			}
+			//Calculate the RMSes using accumulate
+			float RMSLeft = accumulate(leftChannelVector.begin(),leftChannelVector.end(),0,[](T sum, T item){return (sum + pow(item,2));});
+			float RMSRight = accumulate(rightChannelVector.begin(),rightChannelVector.end(),0,[](T sum, T item){return (sum + pow(item,2));});
+			RMSLeft=RMSLeft/noSamples;
+			RMSLeft=sqrt(double(abs(RMSLeft)));
+			RMSRight=RMSRight/noSamples;
+			RMSRight=sqrt(double(abs(RMSRight)));
+			//RMSRight=RMSRight/noSamples;
+			pair<float,float>RMS = make_pair(RMSLeft,RMSRight);
+			return RMS;
+		}
 		//Normalize
 		void normalize(Audio & aClip); 
 		//Copy Constructor
@@ -402,30 +444,48 @@ namespace BRMALA003
 		Audio operator+(Audio & rhs)
 		{
 			Audio temp = *this;
-			//If the audio file is 8bit
+			
 			int max16stereo = INT16_MAX; //prevents compiler warning
+			int min16stereo = INT16_MIN; 
+			//If the audio file is 8bit
 			if (is_same<T,int8_t>::value)
 			{
 				for (int i = 0; i < noSamples; ++i)
 				{
-					//Clamp to the max (both values of the pair)
+					//Clamp to the max/min (both values of the pair)
 					if (temp.data_vector[i].first + rhs.data_vector[i].first >INT8_MAX &&
 					temp.data_vector[i].second + rhs.data_vector[i].second >INT8_MAX)
 					{
 						temp.data_vector[i].first = INT8_MAX;
 						temp.data_vector[i].second = INT8_MAX;
 					}
-					//Clamp to the max (the second of the pair)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first <INT8_MIN &&
+					temp.data_vector[i].second + rhs.data_vector[i].second <INT8_MIN)
+					{
+						temp.data_vector[i].first = INT8_MIN;
+						temp.data_vector[i].second = INT8_MIN;
+					}
+					//Clamp to the max/min (the first of the pair)
 					else if (temp.data_vector[i].first + rhs.data_vector[i].first >INT8_MAX)
 					{
 						temp.data_vector[i].first = INT8_MAX;
 						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
 					}
-					//Clamp to the max (the first of the pair)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first <INT8_MIN)
+					{
+						temp.data_vector[i].first = INT8_MIN;
+						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
+					}
+					//Clamp to the max/min (the second of the pair)
 					else if (temp.data_vector[i].second + rhs.data_vector[i].second >INT8_MAX)
 					{
 						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
 						temp.data_vector[i].second = INT8_MAX;
+					}
+					else if (temp.data_vector[i].second + rhs.data_vector[i].second <INT8_MIN)
+					{
+						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
+						temp.data_vector[i].second = INT8_MIN;
 					}
 					else
 					{
@@ -438,24 +498,40 @@ namespace BRMALA003
 			{
 				for (int i = 0; i < noSamples; ++i)
 				{
-					//Clamp to the max (both values of the pair)
+					//Clamp to the max/min (both values of the pair)
 					if (temp.data_vector[i].first + rhs.data_vector[i].first >max16stereo &&
 					temp.data_vector[i].second + rhs.data_vector[i].second >max16stereo)
 					{
 						temp.data_vector[i].first = max16stereo;
 						temp.data_vector[i].second = max16stereo;
 					}
-					//Clamp to the max (the second of the pair)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first <min16stereo &&
+					temp.data_vector[i].second + rhs.data_vector[i].second <min16stereo)
+					{
+						temp.data_vector[i].first = min16stereo;
+						temp.data_vector[i].second = min16stereo;
+					}
+					//Clamp to the max/min (the first of the pair)
 					else if (temp.data_vector[i].first + rhs.data_vector[i].first >max16stereo)
 					{
 						temp.data_vector[i].first = max16stereo;
 						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
 					}
-					//Clamp to the max (the first of the pair)
+					else if (temp.data_vector[i].first + rhs.data_vector[i].first <min16stereo)
+					{
+						temp.data_vector[i].first = min16stereo;
+						temp.data_vector[i].second = temp.data_vector[i].second + rhs.data_vector[i].second;
+					}
+					//Clamp to the max/min (the second of the pair)
 					else if (temp.data_vector[i].second + rhs.data_vector[i].second >max16stereo)
 					{
 						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
 						temp.data_vector[i].second = max16stereo;
+					}
+					else if (temp.data_vector[i].second + rhs.data_vector[i].second <min16stereo)
+					{
+						temp.data_vector[i].first = temp.data_vector[i].first + rhs.data_vector[i].first;
+						temp.data_vector[i].second = min16stereo;
 					}
 					else
 					{
@@ -497,7 +573,6 @@ namespace BRMALA003
 				++counter;
 			}
 			return temp;
-			
 		}
 		
 	};

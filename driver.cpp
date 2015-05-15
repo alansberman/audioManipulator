@@ -430,10 +430,53 @@ int main(int argc, char * argv[])
 		}
 		if (s=="-rms")
 		{
+			float RMS;
+			pair<float,float>RMSpair;
 			i++;
 			//Extract file 1's name from the args
 			file_one=string(argv[i]);
 			i++;
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> file_8(file_one,sampleRate);
+					cout << "Calculating RMS of " << file_one <<  "...done!" << endl;
+					RMS = file_8.computeRMS();
+					cout << "RMS: " << RMS << endl;
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> file_16(file_one,sampleRate);
+					cout << "Calculating RMS of " << file_one <<  "...done!" << endl;
+					RMS =file_16.computeRMS();
+					cout << "RMS: " << RMS << endl;
+				}
+			}
+			//Stereo audio file
+			if (noChannels == 2)
+			{
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<pair<int8_t,int8_t>> file_8stereo(file_one,sampleRate);
+					cout << "Calculating RMS of the left channel of " << file_one <<  "...done!" << endl;
+					cout << "Calculating RMS of the right channel of " << file_one <<  "...done!" << endl;
+					RMSpair=file_8stereo.computeRMS();
+					cout << "RMS Left channel: " << RMSpair.first << endl;
+					cout << "RMS Right channel: " << RMSpair.second << endl;
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<pair<int16_t,int16_t>> file_16stereo(file_one,sampleRate);
+					cout << "Calculating RMS of the left channel of " << file_one <<  "...done!" << endl;
+					cout << "Calculating RMS of the right channel of " << file_one <<  "...done!" << endl;
+					RMSpair=file_16stereo.computeRMS();
+					cout << "RMS Left channel: " << RMSpair.first << endl;
+					cout << "RMS Right channel: " << RMSpair.second << endl;
+				}
+			}
 			//rms
 			break;
 		}
