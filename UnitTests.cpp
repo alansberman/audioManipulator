@@ -47,13 +47,20 @@ TEST_CASE("Volume factor a file","[]")
 	REQUIRE(newAudio.getNoSamples()==bees.getNoSamples());
 	REQUIRE(newAudio.getDuration()==bees.getDuration());
 }
-TEST_CASE("Get the RMS of a file","[]")
+TEST_CASE("Normalize a file","[]")
 {
 	string outFile = "bees18sec_44100_signed_8bit_mono.raw";
 	int sampleRate = 44100;
 	BRMALA003::Audio<int8_t> bees(outFile,sampleRate);
-	float RMS =bees.computeRMS();
-	cout << outFile << "'s RMS is " << RMS  << endl;
+	float rms1 = 0.1;
+	float rms2 = 0.2;
+	float RMS = bees.computeRMS();
+	BRMALA003::Audio<int8_t> newAudio = bees.normalize(rms1,rms2,RMS);
+	//Produce file
+	newAudio.saveAudio("volumeBees",sampleRate);
+	//Check files correct
+	REQUIRE(newAudio.getNoSamples()==bees.getNoSamples());
+	REQUIRE(newAudio.getDuration()==bees.getDuration());
 }
 
 TEST_CASE("Cut a file across a range","[]")

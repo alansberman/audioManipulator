@@ -83,7 +83,7 @@ namespace BRMALA003
 		}	
 		
 	};
-
+	
 	//General template class (mono .raw files)
 	template <typename T> class Audio
 	{
