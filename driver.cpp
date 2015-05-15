@@ -486,16 +486,39 @@ int main(int argc, char * argv[])
 			i++;
 			//Extract range 1 from the args
 			s=string(argv[i]);
-			rms1 = float(atoi(s.c_str()));
+			rms1 = stof(s);
 			i++;
 			//Extract range two from the args
 			s=string(argv[i]);
-			rms2 = float(atoi(s.c_str()));
+			rms2 = stof(s);
 			i++;
 			//Extract file 1's name from the args
 			file_one=string(argv[i]);
 			i++;
+			//Mono audio file
+			if (noChannels == 1)
+			{
+
+				if (bitCount == 8)
+				{
+					BRMALA003::Audio<int8_t> file_8(file_one,sampleRate);
+					cout << "Normalizing" << file_one <<  "..." << endl;
+					float r = file_8.computeRMS();
+					BRMALA003::Audio<int8_t> norm = file_8.normalize(rms1,rms2,r);
+					norm.saveAudio(outFile,sampleRate);
+				}
+				else if (bitCount == 16)
+				{
+					BRMALA003::Audio<int16_t> file_16(file_one,sampleRate);
+					cout << "Normalizing" << file_one <<  "..." << endl;
+					float r16 = file_16.computeRMS();
+					BRMALA003::Audio<int16_t> norm16 = file_16.normalize(rms1,rms2,r16);
+					norm16.saveAudio(outFile,sampleRate);
+				}
+			}
+		
 			//norm
+			cout << "Done!" << endl;
 			break;
 		}
 		

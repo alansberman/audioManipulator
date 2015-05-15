@@ -40,15 +40,35 @@ TEST_CASE("Volume factor a file","[]")
 	int sampleRate = 44100;
 	BRMALA003::Audio<pair<int16_t,int16_t>> bees(outFile,sampleRate);
 	pair<float,float>f = make_pair(0.2,0.5);
-	BRMALA003::Audio<int8_t> newAudio = bees*f;
+	BRMALA003::Audio<pair<int16_t,int16_t>> newAudio = bees*f;
 	//Produce file
 	newAudio.saveAudio("volumeBees",sampleRate);
 	//Check files correct
 	REQUIRE(newAudio.getNoSamples()==bees.getNoSamples());
 	REQUIRE(newAudio.getDuration()==bees.getDuration());
-	REQUIRE(newAudio.getDataVector().at(44100)!=bees.getDataVector().at(44100));
+}
+TEST_CASE("Get the RMS of a file","[]")
+{
+	string outFile = "bees18sec_44100_signed_8bit_mono.raw";
+	int sampleRate = 44100;
+	BRMALA003::Audio<int8_t> bees(outFile,sampleRate);
+	float RMS =bees.computeRMS();
+	cout << outFile << "'s RMS is " << RMS  << endl;
 }
 
+TEST_CASE("Cut a file across a range","[]")
+{
+	string outFile = "countdown40sec_44100_signed_16bit_stereo.raw";
+	int sampleRate = 44100;
+	BRMALA003::Audio<pair<int16_t,int16_t>> count(outFile,sampleRate);
+	BRMALA003::Audio<pair<int16_t,int16_t>> countCopy(outFile,sampleRate);
+	pair<float,float>f = make_pair(0,132300);
+	BRMALA003::Audio<pair<int16_t,int16_t>> newAudio = count^(f);
+	//Produce file
+	newAudio.saveAudio("cutCount",sampleRate);
+	//Check files correct
+	REQUIRE(newAudio.getNoSamples()<count.getNoSamples());
+}
 
 TEST_CASE("Concatenate 2 files","[]")
 {
@@ -66,7 +86,7 @@ TEST_CASE("Concatenate 2 files","[]")
 }
 
 //Reverse a file
-TEST_CASE("Reverse a file twice twice","[]")
+TEST_CASE("Reverse ","[]")
 {
 	string outFile = "countdown40sec_44100_signed_8bit_mono.raw";
 	int sampleRate = 44100;
@@ -78,6 +98,7 @@ TEST_CASE("Reverse a file twice twice","[]")
 	newAudio.saveAudio("reverse",sampleRate);
 	REQUIRE(newAudio.getDuration()==orig.getDuration());
 }
+
 
 //Audio move constructor test
 //Check resources released from rhs

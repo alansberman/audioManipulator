@@ -25,6 +25,65 @@
 namespace BRMALA003
 {
 	using namespace std;
+	//Used for normalize (mono files)
+	template<typename T> class Func
+	{
+		private:
+		float d,c;
+		public:
+		Func(float desired,float current)
+		{
+			d=desired;
+			c=current;
+		}
+		T operator()(T item)
+		{
+			int max_16=INT16_MAX;
+			int min_16=INT16_MAX;
+			//Clamp values
+			if  (is_same<T,int8_t>::value)
+			{
+				if (item*(d/c) > INT8_MAX)
+				{
+					item=INT8_MAX;
+					return item;
+				}
+				else if (item*(d/c) < INT8_MIN)
+				{
+					item=INT8_MIN;
+					return item;
+				}
+				else
+				{
+					item=item*(d/c);
+					return item;
+				}
+			}
+			else
+			{
+				if ((item*(d/c)) > max_16)
+				{
+					item=max_16;
+				
+					return item;
+				}
+				else if ((item*(d/c)) < min_16)
+				{
+					item=min_16;
+					
+					return item;
+				}
+				else
+				{
+					item=(item*(d/c));
+					
+					return item;
+				}
+			}
+		}	
+		
+	};
+
 	//General template class (mono .raw files)
 	template <typename T> class Audio
 	{
@@ -121,6 +180,7 @@ namespace BRMALA003
 			copy(this->data_vector.begin()+(a.first*sampleRate),this->data_vector.begin()+(a.second*sampleRate),temp.data_vector.begin());
 			copy(rhs.data_vector.begin()+(a.first*sampleRate),rhs.data_vector.begin()+(b.second*sampleRate),rhsCopy.data_vector.begin());
 			Audio result =temp+rhsCopy;
+			result.duration = temp.noSamples / (float) sampleRate;
 			return result;  	
 		}
 		//Compute RMS
@@ -132,15 +192,30 @@ namespace BRMALA003
 			return RMS;
 		}
 		//Normalize
-		Audio normalize(float left, float right)
+		Audio normalize(float left, float right,float currentRMS)
 		{
 			Audio temp = *this;
+			temp.data_vector.clear();
+			temp.data_vector.resize(temp.noSamples);
+			if  (is_same<T,int8_t>::value)
+			{
+				Func<int8_t> f(left,currentRMS);
+				transform(data_vector.begin(),data_vector.end(),temp.data_vector.begin(), f);
+				return temp;
+			}
+			else
+			{
+				Func<int16_t> g(left,currentRMS);
+				transform(data_vector.begin(),data_vector.end(),temp.data_vector.begin(), g);
+				return temp;
+			}
 		} 
 		//Copy Constructor
 		Audio(const Audio & rhs)
 		{
 			noSamples = rhs.noSamples;	
 			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
 			data_vector.resize(noSamples);
 			//Copy the values of rhs's data_vector
 			for (int j = 0; j< noSamples;++j)
@@ -149,10 +224,71 @@ namespace BRMALA003
 			}
 		}
 		//Move Constructor
-		Audio(Audio && rhs)=default;
+		Audio(Audio && rhs)
+		{
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
+			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j] = rhs.data_vector[j];
+			}
+			rhs.noSamples = -1;
+			rhs.sampleLength = -1;
+			rhs.duration=-1;
+			rhs.data_vector.clear();
+			
+		}
+		//getNoSamples
+		int getNoSamples()
+		{
+			return noSamples;
+		}
+		//getDataVector
+		vector<T> getDataVector()
+		{
+			return data_vector;
+		}
+		int getDuration()
+		{
+			return duration;
+		}
 		//Copy and Move Assignment Operators
-		Audio & operator=(Audio & rhs)=default; 
-		Audio & operator=(Audio && rhs)=default;
+		Audio & operator=(Audio & rhs)
+		{
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
+			data_vector.clear();
+			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j] = rhs.data_vector[j];
+			}
+			return *this;
+			
+		}
+		Audio & operator=(Audio && rhs)
+		{
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
+			data_vector.clear();
+			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j] = rhs.data_vector[j];
+			}
+			rhs.noSamples = -1;
+			rhs.sampleLength = -1;
+			rhs.duration=-1;
+			rhs.data_vector.clear();
+			return *this;
+		}
 		//Operator overloads
 		//Concatenate 2 files
 		Audio operator|(Audio & rhs)
@@ -251,6 +387,7 @@ namespace BRMALA003
 				temp.data_vector[j]=data_vector[end+counter];
 				++counter;
 			}
+
 			return temp;
 			
 		}
@@ -325,6 +462,20 @@ namespace BRMALA003
 				}
 			}
 		}
+		//getNoSamples
+		int getNoSamples()
+		{
+			return noSamples;
+		}
+		//getDataVector
+		vector<pair<T,T>> getDataVector()
+		{
+			return data_vector;
+		}
+		int getDuration()
+		{
+			return duration;
+		}
 		//Reverse an Audio clip using the Standard Template Library's
 		//reverse()
 		Audio reverseAudio(void)
@@ -357,7 +508,6 @@ namespace BRMALA003
 			copy(this->data_vector.begin()+(a.first*sampleRate),this->data_vector.begin()+(a.second*sampleRate),temp.data_vector.begin());
 			copy(rhs.data_vector.begin()+(a.first*sampleRate),rhs.data_vector.begin()+(b.second*sampleRate),rhsCopy.data_vector.begin());
 			Audio result =temp+rhsCopy;
-			cout << result.data_vector.size() << " is result's size " << endl;
 			return result;  	
 		}
 			
@@ -389,12 +539,44 @@ namespace BRMALA003
 			return RMS;
 		}
 		//Normalize
-		void normalize(Audio & aClip); 
+		/*
+		Audio normalize(float left, float right,float currentRMSL, float currentRMSR)
+		{
+			Audio temp = *this;
+			//Make a data vector for the left and right values of the pair
+			vector<T> leftChannelVector;
+			leftChannelVector.resize(temp.noSamples);
+			vector<T> rightChannelVector;
+			rightChannelVector.resize(temp.noSamples);
+			//Add the left values to the left vector and vice versa
+			for (int i=0;i<noSamples;++i)
+			{
+				leftChannelVector[i]=data_vector[i].first;
+				rightChannelVector[i]=data_vector[i].second;
+			}
+			if  (is_same<T,int8_t>::value)
+			{
+				Func<int8_t> f(left,currentRMSL);
+				transform(data_vector.begin(),data_vector.end(),leftChannelVector.begin(), f);
+				Func<int8_t> g(right,currentRMSR);
+				transform(data_vector.begin(),data_vector.end(),rightChannelVector.begin(), g);
+				return temp;
+			}
+			else
+			{
+				Func<int16_t> f16(left,currentRMSL);
+				transform(data_vector.begin(),data_vector.end(),leftChannelVector.begin(), f16);
+				Func<int16_t> g16(right,currentRMSR);
+				transform(data_vector.begin(),data_vector.end(),rightChannelVector.begin(), g16);
+				return temp;
+			}
+		}  */
 		//Copy Constructor
 		Audio(Audio & rhs)
 		{
 			noSamples = rhs.noSamples;	
 			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
 			data_vector.resize(noSamples);
 			//Copy rhs' data_vectors values (both halves of pair)
 			for (int j = 0; j< noSamples;++j)
@@ -405,10 +587,60 @@ namespace BRMALA003
 		
 		}
 		//Move Constructor
-		Audio(Audio && rhs);
+		Audio(Audio && rhs)
+		{
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
+			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j].first = rhs.data_vector[j].first;
+				data_vector[j].second = rhs.data_vector[j].second;
+			}
+			rhs.noSamples = -1;
+			rhs.sampleLength = -1;
+			rhs.duration = -1;
+			rhs.data_vector.clear();
+			
+		}
 		//Copy and Move Assignment Operators
-		Audio & operator=(Audio & rhs); 
-		Audio & operator=(Audio && rhs);
+	
+		Audio & operator=(Audio & rhs)
+		{
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
+			data_vector.clear();
+			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j].first = rhs.data_vector[j].first;
+				data_vector[j].second = rhs.data_vector[j].second;
+			}
+			return *this;	
+		}
+		Audio & operator=(Audio && rhs)
+		{
+			noSamples = rhs.noSamples;	
+			sampleLength = rhs.sampleLength;
+			duration = rhs.duration;
+			data_vector.clear();
+			data_vector.resize(noSamples);
+			//Copy the values of rhs's data_vector
+			for (int j = 0; j< noSamples;++j)
+			{
+				data_vector[j].first = rhs.data_vector[j].first;
+				data_vector[j].second = rhs.data_vector[j].second;
+			}
+			rhs.noSamples = -1;
+			rhs.sampleLength = -1;
+			rhs.duration = -1;
+			rhs.data_vector.clear();
+			return *this;
+		}
 		//Operator overloads
 		
 		//Concatenate 2 files
@@ -426,6 +658,7 @@ namespace BRMALA003
 				temp.data_vector[i].first = rhs.data_vector[i-oldNoSamples].first;
 				temp.data_vector[i].second = rhs.data_vector[i-oldNoSamples].second;	
 			}
+			
 			return temp;
 		}
 		//Change the volume of the file by factor f
@@ -572,6 +805,7 @@ namespace BRMALA003
 				temp.data_vector[j].second = data_vector[end+counter].second;
 				++counter;
 			}
+			
 			return temp;
 		}
 		
