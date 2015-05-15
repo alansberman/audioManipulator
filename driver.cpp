@@ -9,7 +9,8 @@
 #include <vector>
 #include "Audio.h"
 //Driver that performs a variety of operations one/two 
-//sound files
+//sound files (either 8 or 16bit) that can be mono
+//or stereo using the templated Audio class.
 using namespace std;
 int main(int argc, char * argv[])
 {
